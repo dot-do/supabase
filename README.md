@@ -1,53 +1,204 @@
 # supabase.do
 
-Supabase on Cloudflare Durable Objects - A complete backend for every AI agent.
+> Backend-as-a-Service. Edge-Native. AI-First. Natural Language.
+
+Supabase charges for hosted Postgres, complex query builders, and infrastructure you don't control. Developers write `.from().select().eq()` chains that no one can read aloud.
+
+**supabase.do** is the open-source alternative. Durable Objects + SQLite. Natural language queries. Deploys in seconds, not minutes.
+
+## AI-Native API
+
+```typescript
+import { supabase } from 'supabase.do'           // Full SDK
+import { supabase } from 'supabase.do/tiny'      // Minimal client
+import { supabase } from 'supabase.do/realtime'  // Subscriptions only
+```
+
+Natural language for database operations:
+
+```typescript
+import { supabase } from 'supabase.do'
+
+// Talk to it like a colleague
+const tasks = await supabase`pending tasks sorted by due date`
+const users = await supabase`users who signed up today`
+const overdue = await supabase`tasks overdue assigned to ralph`
+
+// Chain like sentences
+await supabase`high priority bugs`
+  .notify(`Bug needs attention`)
+
+// Agents watching other agents
+await supabase`watch tasks where assignee = ralph on insert`.notify(tom)
+```
 
 ## The Problem
 
-AI agents need databases. Millions of them. Running in parallel. Each isolated. Each with their own state.
+Supabase (the company) dominates the "Postgres-as-a-Service" market:
 
-Traditional databases were built for humans:
-- One shared database for many users
-- Centralized infrastructure
-- Manual scaling
-- Expensive per-instance
+| What Supabase Charges | The Reality |
+|-----------------------|-------------|
+| **Pro Plan** | $25/month minimum |
+| **Database Size** | $0.125/GB after 8GB |
+| **Egress** | $0.09/GB after 50GB |
+| **Realtime** | Limited connections on free tier |
+| **Edge Functions** | Pay per invocation |
+| **Vendor Lock-in** | Your data on their servers |
 
-AI agents need the opposite:
-- One database per agent
-- Distributed by default
-- Infinite automatic scaling
-- Free at the instance level, pay for usage
+### The Query Builder Tax
 
-## The Vision
-
-Every AI agent gets their own Supabase.
+Every Supabase tutorial teaches this:
 
 ```typescript
-import { tom, ralph, priya } from 'agents.do'
-import { Supabase } from 'supabase.do'
-
-// Each agent has their own isolated database
-const tomDb = Supabase.for(tom)
-const ralphDb = Supabase.for(ralph)
-const priyaDb = Supabase.for(priya)
-
-// Full Supabase API
-await tomDb.from('reviews').insert({ pr: 123, status: 'approved' })
-await ralphDb.from('builds').select('*').eq('status', 'pending')
-await priyaDb.from('roadmap').update({ priority: 1 }).eq('feature', 'auth')
+// This is what developers write today
+const { data, error } = await supabase
+  .from('tasks')
+  .select('*')
+  .eq('status', 'pending')
+  .order('created_at', { ascending: false })
 ```
 
-Not a shared database with row-level security. Not a multi-tenant nightmare. Each agent has their own complete Supabase instance.
+Try reading that aloud to a colleague. You can't. It's code for machines, not humans.
+
+## The Solution
+
+**supabase.do** reimagines BaaS for the AI era:
+
+```
+Supabase (hosted)              supabase.do
+-----------------------------------------------------------------
+$25/month minimum              $0 - run your own
+Their Postgres                 Your Cloudflare account
+Query builder chains           Natural language
+Centralized database           Durable Object per agent
+Manual scaling                 Infinite automatic scaling
+Complex API                    Talk to it like a colleague
+```
+
+## One-Click Deploy
+
+```bash
+npx create-dotdo supabase
+```
+
+A complete backend. Running on infrastructure you control. Natural language from day one.
+
+```typescript
+import { Supabase } from 'supabase.do'
+
+export default Supabase({
+  name: 'my-startup',
+  domain: 'db.my-startup.com',
+})
+```
 
 ## Features
 
-- **Postgres-like SQL** - SQLite under the hood, Postgres API on top
-- **Real-time Subscriptions** - Agents watching for changes from other agents
-- **Auth** - Every agent has identity (keys, tokens, sessions)
-- **Storage** - File attachments backed by R2
-- **Edge Functions** - Agent-defined serverless functions
-- **Tiered Storage** - Hot (SQLite) / Warm (R2) / Cold (Archive)
-- **MCP Tools** - Model Context Protocol for AI-native database operations
+### Querying Data
+
+```typescript
+// Find anything naturally
+const tasks = await supabase`all tasks`
+const pending = await supabase`pending tasks`
+const urgent = await supabase`high priority bugs assigned to ralph`
+
+// AI infers what you need
+await supabase`tasks`                  // returns all tasks
+await supabase`pending tasks`          // filters by status
+await supabase`tasks created today`    // filters by date
+```
+
+### Inserting Data
+
+```typescript
+// Just say what you want to create
+await supabase`new task: build authentication for ralph`
+await supabase`add bug: login fails on mobile`
+
+// Or with explicit data
+await supabase`insert into tasks: ${{ title: 'Build auth', assignee: 'ralph' }}`
+```
+
+### Updating Data
+
+```typescript
+// Natural updates
+await supabase`mark task 123 as complete`
+await supabase`assign all pending tasks to tom`
+await supabase`set priority high on bugs older than 7 days`
+```
+
+### Deleting Data
+
+```typescript
+// Natural deletes
+await supabase`delete completed tasks older than 30 days`
+await supabase`remove task 123`
+```
+
+### Real-time Subscriptions
+
+```typescript
+// Watch for changes naturally
+await supabase`watch tasks on insert`.notify(tom)
+await supabase`watch bugs where priority = high`.alert()
+
+// Agent-to-agent watching
+import { tom, ralph } from 'agents.do'
+
+await supabase`watch ralph's builds on insert`
+  .each(build => tom`review ${build}`)
+```
+
+### Auth
+
+```typescript
+// Sign in naturally
+await supabase`sign in tom@agents.do`
+await supabase`sign in with github`
+await supabase`who am i`
+
+// Agent authentication
+const session = await supabase`authenticate tom with ${env.TOM_API_KEY}`
+```
+
+### Storage
+
+```typescript
+// File operations in plain English
+await supabase`store attachments report.pdf`
+await supabase`download attachments/report.pdf`
+await supabase`url for attachments/report.pdf`
+
+// Batch operations
+await supabase`list files in attachments`
+await supabase`delete attachments/old-report.pdf`
+```
+
+### Edge Functions
+
+```typescript
+// Invoke functions naturally
+await supabase`run process-webhook with ${{ event: 'user.created' }}`
+
+// Define functions with natural triggers
+await supabase`on user created run send-welcome-email`
+```
+
+### Promise Pipelining
+
+Work chains without `Promise.all`:
+
+```typescript
+// Find tasks, assign them, notify assignees - one round trip
+const notified = await supabase`unassigned high priority tasks`
+  .map(task => supabase`assign ${task} to available developer`)
+  .map(assigned => assigned.assignee`you have a new task: ${assigned.title}`)
+
+// Review chain
+await supabase`pending code reviews`
+  .map(pr => [tom, priya, quinn].map(r => r`review ${pr}`))
+```
 
 ## Architecture
 
@@ -76,267 +227,96 @@ Not a shared database with row-level security. Not a multi-tenant nightmare. Eac
 
 **Scale**: Millions of concurrent isolated instances. Each is free to create. You pay for what you use.
 
-## Installation
+### Storage Tiers
 
-```bash
-npm install supabase.do
-```
-
-## Quick Start
-
-### Basic Operations
-
-```typescript
-import { Supabase } from 'supabase.do'
-
-const db = new Supabase(env.SUPABASE)
-
-// Insert
-await db.from('tasks').insert({
-  title: 'Build authentication',
-  status: 'pending',
-  assignee: 'ralph'
-})
-
-// Select with filters
-const tasks = await db
-  .from('tasks')
-  .select('*')
-  .eq('status', 'pending')
-  .order('created_at', { ascending: false })
-
-// Update
-await db
-  .from('tasks')
-  .update({ status: 'complete' })
-  .eq('id', task.id)
-
-// Delete
-await db.from('tasks').delete().eq('id', task.id)
-```
-
-### Real-time Subscriptions
-
-```typescript
-import { Supabase } from 'supabase.do'
-
-const db = new Supabase(env.SUPABASE)
-
-// Subscribe to changes
-const subscription = db
-  .channel('tasks')
-  .on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'tasks',
-    filter: 'assignee=eq.ralph'
-  }, (payload) => {
-    console.log('New task for Ralph:', payload.new)
-  })
-  .subscribe()
-
-// Agents watching other agents
-import { tom, ralph } from 'agents.do'
-
-tom.watch(ralph.db.from('builds'), {
-  event: 'INSERT'
-}, async (build) => {
-  await tom`review ${build}`
-})
-```
-
-### Auth
-
-```typescript
-import { Supabase } from 'supabase.do'
-
-const db = new Supabase(env.SUPABASE)
-
-// Agent authentication
-const { data: { session } } = await db.auth.signIn({
-  agent: 'tom@agents.do',
-  key: env.TOM_API_KEY
-})
-
-// Human authentication
-const { data: { url } } = await db.auth.signInWithOAuth({
-  provider: 'github'
-})
-
-// JWT validation
-const { data: { user } } = await db.auth.getUser(jwt)
-```
-
-### Storage
-
-```typescript
-import { Supabase } from 'supabase.do'
-
-const db = new Supabase(env.SUPABASE)
-
-// Upload file
-const { data, error } = await db.storage
-  .from('attachments')
-  .upload('report.pdf', file)
-
-// Download file
-const { data: blob } = await db.storage
-  .from('attachments')
-  .download('report.pdf')
-
-// Get public URL
-const { data: { publicUrl } } = db.storage
-  .from('attachments')
-  .getPublicUrl('report.pdf')
-```
-
-### Edge Functions
-
-```typescript
-import { Supabase } from 'supabase.do'
-
-const db = new Supabase(env.SUPABASE)
-
-// Invoke an edge function
-const { data, error } = await db.functions.invoke('process-webhook', {
-  body: { event: 'user.created', data: user }
-})
-
-// Define an edge function
-export const processWebhook = db.functions.define('process-webhook', async (req) => {
-  const { event, data } = await req.json()
-  // Handle webhook...
-  return { processed: true }
-})
-```
-
-### MCP Tools
-
-```typescript
-import { supabaseTools, invokeTool } from 'supabase.do/mcp'
-
-// List available database tools
-console.log(supabaseTools.map(t => t.name))
-// ['db_query', 'db_insert', 'db_update', 'db_delete', 'db_subscribe', ...]
-
-// Invoke a tool
-const result = await invokeTool('db_query', {
-  table: 'tasks',
-  select: '*',
-  filter: { status: 'pending' }
-})
-
-// AI-native database access
-await invokeTool('db_query', {
-  natural: 'find all tasks assigned to Ralph that are overdue'
-})
-```
-
-### Durable Object
-
-```typescript
-import { SupabaseDO } from 'supabase.do/do'
-
-// In your worker
-export { SupabaseDO }
-
-export default {
-  async fetch(request, env) {
-    // Each agent gets their own Supabase instance
-    const id = env.SUPABASE.idFromName('agent-tom')
-    const stub = env.SUPABASE.get(id)
-    return stub.fetch(request)
-  }
-}
-```
+| Tier | Storage | Use Case | Query Speed |
+|------|---------|----------|-------------|
+| **Hot** | SQLite | Active records, recent data | <10ms |
+| **Warm** | R2 + SQLite Index | Historical data (2-7 years) | <100ms |
+| **Cold** | R2 Archive | Compliance retention (7+ years) | <1s |
 
 ### Tiered Storage
 
 ```typescript
-import { TieredSupabase } from 'supabase.do/storage'
-
-const db = new TieredSupabase({
-  hot: env.SUPABASE,      // Durable Object (fast, small)
-  warm: env.R2_BUCKET,    // R2 (large blobs)
-  cold: env.ARCHIVE,      // Archive (infrequent)
-  thresholds: {
-    hotMaxRows: 100000,           // 100k rows
-    hotMaxSize: 10 * 1024 * 1024, // 10MB
-  }
-})
-
-// Automatic tier selection
-await db.from('logs').insert(smallRecord)    // -> hot tier
-await db.from('logs').insert(hugeRecord)     // -> warm tier
-
-// Cold queries with auto-promotion
-const archived = await db.from('logs')
-  .select('*')
-  .lt('created_at', '2024-01-01')  // -> cold tier, promoted on access
+// Automatic tier selection - just query naturally
+await supabase`recent logs`           // -> hot tier
+await supabase`logs from last year`   // -> warm tier
+await supabase`logs from 2020`        // -> cold tier, promoted on access
 ```
 
-## API Overview
+## Per-Agent Databases
 
-### Database (`supabase.do`)
+Every AI agent gets their own isolated Supabase instance:
 
-**Query Builder**
-- `from(table)` - Start a query
-- `select(columns)` - Select columns
-- `insert(data)` - Insert rows
-- `update(data)` - Update rows
-- `delete()` - Delete rows
-- `upsert(data)` - Insert or update
+```typescript
+import { tom, ralph, priya } from 'agents.do'
 
-**Filters**
-- `eq(column, value)` - Equal
-- `neq(column, value)` - Not equal
-- `gt(column, value)` - Greater than
-- `lt(column, value)` - Less than
-- `like(column, pattern)` - LIKE match
-- `in(column, values)` - IN list
-- `is(column, value)` - IS NULL/NOT NULL
-- `or(filters)` - OR conditions
-- `not(filter)` - NOT condition
+// Each agent has their own complete database
+const tomDb = supabase.for(tom)
+const ralphDb = supabase.for(ralph)
+const priyaDb = supabase.for(priya)
 
-**Ordering & Pagination**
-- `order(column, options)` - Sort results
-- `limit(count)` - Limit rows
-- `range(from, to)` - Pagination
+// Natural queries scoped to each agent
+await tomDb`my pending reviews`
+await ralphDb`my active builds`
+await priyaDb`roadmap items I own`
+```
 
-### Real-time (`supabase.do/realtime`)
+Not a shared database with row-level security. Not a multi-tenant nightmare. Each agent has their own complete instance.
 
-- `channel(name)` - Create channel
-- `on(event, filter, callback)` - Subscribe to events
-- `subscribe()` - Start subscription
-- `unsubscribe()` - Stop subscription
+## vs Supabase (Hosted)
 
-### Auth (`supabase.do/auth`)
+| Feature | Supabase (Hosted) | supabase.do |
+|---------|-------------------|-------------|
+| **Minimum Cost** | $25/month | $0 - run your own |
+| **Architecture** | Centralized Postgres | Edge-native Durable Objects |
+| **Query API** | `.from().select().eq()` chains | Natural language |
+| **Per-Agent DB** | Multi-tenant with RLS | Complete isolation |
+| **Data Location** | Their servers | Your Cloudflare account |
+| **Real-time** | Limited connections | Unlimited watchers |
+| **Scaling** | Manual, pay more | Automatic, infinite |
+| **Lock-in** | Their infrastructure | MIT licensed |
 
-- `signIn(credentials)` - Sign in
-- `signOut()` - Sign out
-- `getSession()` - Get current session
-- `getUser()` - Get current user
-- `onAuthStateChange(callback)` - Auth state listener
+## Use Cases
 
-### Storage (`supabase.do/storage`)
+### Task Management
 
-- `from(bucket)` - Select bucket
-- `upload(path, file)` - Upload file
-- `download(path)` - Download file
-- `remove(paths)` - Delete files
-- `list(path)` - List files
-- `getPublicUrl(path)` - Get URL
+```typescript
+// Natural task operations
+await supabase`create task: review PR 123 for tom`
+await supabase`pending tasks sorted by priority`
+await supabase`tasks overdue this week`
 
-### Functions (`supabase.do/functions`)
+// Bulk operations
+await supabase`close all completed tasks older than 30 days`
+```
 
-- `invoke(name, options)` - Call function
-- `define(name, handler)` - Create function
+### Agent Memory
 
-### MCP Tools (`supabase.do/mcp`)
+```typescript
+// Each agent remembers their work
+await supabase`store context: ${{ topic: 'auth', decisions: [...] }}`
+await supabase`recall context about auth`
+await supabase`what did I work on yesterday`
+```
 
-- `supabaseTools` - Available tool definitions
-- `invokeTool(name, params)` - Execute a tool
-- `registerTool(tool)` - Add custom tool
+### Event Logs
+
+```typescript
+// Natural logging
+await supabase`log: user 123 signed in from mobile`
+await supabase`recent errors`
+await supabase`activity for user 123 last 24 hours`
+```
+
+### Analytics
+
+```typescript
+// Query metrics naturally
+await supabase`signups this month by country`
+await supabase`daily active users trend`
+await supabase`top 10 features by usage`
+```
 
 ## The Rewrites Ecosystem
 
@@ -357,8 +337,8 @@ Each rewrite follows the same pattern:
 - Durable Object per instance (per agent)
 - SQLite for hot tier storage
 - R2 for warm/cold tier storage
-- MCP tools for AI-native access
-- Compatible API with the original
+- Natural language API
+- Compatible with the original when needed
 
 ## Why Durable Objects?
 
@@ -375,7 +355,6 @@ supabase.do is a core service of [workers.do](https://workers.do) - the platform
 
 ```typescript
 import { priya, ralph, tom, mark } from 'agents.do'
-import { Supabase } from 'supabase.do'
 
 // AI agents with full-stack infrastructure
 const startup = {
@@ -385,19 +364,39 @@ const startup = {
   marketing: mark,     // content, launches
 }
 
-// Each agent has their own database, filesystem, git repo
-for (const [role, agent] of Object.entries(startup)) {
-  const db = Supabase.for(agent)
-  await db.from('context').insert({
-    role,
-    started: new Date(),
-    status: 'active'
-  })
-}
+// Each agent gets their own database, works naturally
+await priya`create roadmap item: launch auth feature`
+await ralph`log build: auth v1.0.0 deployed`
+await tom`store review: PR 123 approved with comments`
+await mark`draft announcement: auth is live`
 ```
 
 Both kinds of workers. Working for you.
 
+## Contributing
+
+supabase.do is open source under the MIT license.
+
+```bash
+git clone https://github.com/dotdo/supabase.do
+cd supabase.do
+pnpm install
+pnpm test
+```
+
 ## License
 
 MIT
+
+---
+
+<p align="center">
+  <strong>Query builder chains end here.</strong>
+  <br />
+  Natural language. Edge-native. AI-first.
+  <br /><br />
+  <a href="https://supabase.do">Website</a> |
+  <a href="https://docs.supabase.do">Docs</a> |
+  <a href="https://discord.gg/dotdo">Discord</a> |
+  <a href="https://github.com/dotdo/supabase.do">GitHub</a>
+</p>
